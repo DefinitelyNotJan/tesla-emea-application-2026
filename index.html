@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jan Lönnqvist — Application: In-House Graphic Designer, Tesla EMEA</title>
+    <style>
+        @font-face {
+            font-family: 'Diatype Variable';
+            src: url('https://type.cargo.site/files/Cargo-DiatypePlusVariable.woff2') format('woff2');
+            font-weight: 200 1000;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Diatype Variable';
+            src: url('https://type.cargo.site/files/Cargo-DiatypePlusVariable-Italic.woff2') format('woff2');
+            font-weight: 200 1000;
+            font-style: italic;
+            font-display: swap;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0a0a0a;
+            --text: rgba(255,255,255,0.92);
+            --text-60: rgba(255,255,255,0.55);
+            --text-40: rgba(255,255,255,0.35);
+            --tesla-red: #e82127;
+        }
+
+        html { scroll-behavior: auto; }
+
+        body {
+            font-family: 'Diatype Variable', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #webgl {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+        }
+
+        .overlay {
+            position: relative;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .chapter {
+            min-height: 150vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .chapter:first-child { min-height: 100vh; }
+
+        .chapter-inner {
+            position: sticky;
+            top: 50%;
+            transform: translateY(-50%);
+            max-width: 740px;
+            padding: 36px 44px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            pointer-events: auto;
+        }
+
+        .chapter-inner.visible { opacity: 1; }
+
+        .chapter-inner h1 {
+            font-weight: 700;
+            font-size: clamp(2.4rem, 7vw, 4.8rem);
+            letter-spacing: -0.03em;
+            line-height: 1.0;
+            margin-bottom: 12px;
+        }
+
+        .chapter-inner h2 {
+            font-weight: 600;
+            font-size: clamp(1.3rem, 2.8vw, 1.9rem);
+            letter-spacing: -0.02em;
+            line-height: 1.15;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+
+        .chapter-inner .role {
+            font-weight: 400;
+            font-size: clamp(0.8rem, 1.3vw, 0.95rem);
+            color: var(--tesla-red);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .chapter-inner .subtitle {
+            font-weight: 350;
+            font-size: clamp(0.85rem, 1.5vw, 1.05rem);
+            color: var(--text-60);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .chapter-inner p {
+            font-weight: 350;
+            font-size: clamp(1rem, 1.7vw, 1.15rem);
+            line-height: 1.65;
+            color: var(--text-60);
+            margin-top: 8px;
+        }
+
+        .chapter-inner .label {
+            font-weight: 600;
+            font-size: clamp(0.7rem, 1.1vw, 0.8rem);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-40);
+            margin-bottom: 10px;
+        }
+
+        .chapter-inner .highlight {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .chapter-inner a {
+            color: var(--text);
+            text-decoration: none;
+            border-bottom: 1px solid var(--text-40);
+            transition: border-color 0.3s;
+            pointer-events: auto;
+        }
+
+        .chapter-inner a:hover { border-color: var(--tesla-red); }
+
+        .contact-links {
+            margin-top: 18px;
+            font-size: clamp(0.9rem, 1.5vw, 1.05rem);
+            color: var(--text-60);
+            line-height: 2;
+        }
+
+        .tools {
+            margin-top: 14px;
+            font-size: clamp(0.8rem, 1.2vw, 0.9rem);
+            color: var(--text-40);
+            letter-spacing: 0.04em;
+            line-height: 1.8;
+        }
+
+        .scroll-hint {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-40);
+            opacity: 1;
+            transition: opacity 0.8s ease;
+            pointer-events: none;
+        }
+
+        .scroll-hint.hidden { opacity: 0; }
+        .scroll-hint span {
+            display: inline-block;
+            animation: scrollBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes scrollBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(6px); }
+        }
+
+        #loader {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #0a0a0a;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1s ease;
+        }
+
+        #loader.done { opacity: 0; pointer-events: none; }
+
+        #loader .bar {
+            width: 120px;
+            height: 2px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 1px;
+            overflow: hidden;
+        }
+
+        #loader .bar-fill {
+            width: 0%;
+            height: 100%;
+            background: var(--tesla-red);
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .chapter { min-height: 120vh; }
+            .chapter-inner { padding: 24px 22px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="loader"><div class="bar"><div class="bar-fill" id="loaderFill"></div></div></div>
+
+<canvas id="webgl"></canvas>
+
+<div class="overlay">
+    <section class="chapter" data-index="0">
+        <div class="chapter-inner">
+            <div class="role">Application</div>
+            <h1>JAN LÖNNQVIST</h1>
+            <p class="subtitle">In-House Graphic Designer — Tesla EMEA Production Team</p>
+        </div>
+    </section>
+
+    <section class="chapter" data-index="1">
+        <div class="chapter-inner">
+            <div class="label">2013 – 2018 · Helsinki</div>
+            <h2>Production Precision</h2>
+            <p>Five years on print production floors — Multiprint, Lönnberg, Cocomms, Pixmill, Planex. Offset printing, prepress, colour management and brand-spec execution. The discipline of production where every detail is measured, every proof is checked, and every asset ships on time.</p>
+        </div>
+    </section>
+
+    <section class="chapter" data-index="2">
+        <div class="chapter-inner">
+            <div class="label">2019 – 2020</div>
+            <h2>Brand Leadership</h2>
+            <p>Art direction at Valve. Then IKEA — a photography-led sustainability campaign that helped preserve an old-growth forest. <span class="highlight">Translating global brand guidelines into locally resonant creative</span>, adapting assets for cultural and environmental context. Brand consistency with regional nuance.</p>
+        </div>
+    </section>
+
+    <section class="chapter" data-index="3">
+        <div class="chapter-inner">
+            <h2>Localized at Scale</h2>
+            <p>Amsterdam. HelloFresh — <span class="highlight">leading a team of three</span>, managing multiple campaigns simultaneously. Rituals Hammam campaign: highest sales in the product's history. DHL — <span class="highlight">12+ markets, 26 locations</span>, 20% of targeted leads in month one. Brochures, social media, emailing, point-of-sale. Every format, every market.</p>
+        </div>
+    </section>
+
+    <section class="chapter" data-index="4">
+        <div class="chapter-inner">
+            <h2>EMEA-Wide Design</h2>
+            <p>GLS Group. <span class="highlight">40+ countries</span>. Group-level design systems. Adapting global templates to local markets across Europe, managing asset libraries, ensuring brand coherence at continental scale. The exact workflow Tesla's EMEA Production Team runs daily.</p>
+        </div>
+    </section>
+
+    <section class="chapter" data-index="5">
+        <div class="chapter-inner">
+            <h2>Full-Stack Toolkit</h2>
+            <p>From offset lithography to AI-assisted workflows. Figma, Adobe Creative Suite, production pipelines, design systems, template architecture. <span class="highlight">Cultural sensitivity across EMEA markets</span> — typography, layout, colour, and composition tailored to regional audiences.</p>
+            <div class="tools">Figma · Photoshop · Illustrator · InDesign · After Effects · Premiere Pro · AI workflows</div>
+        </div>
+    </section>
+
+    <section class="chapter" data-index="6">
+        <div class="chapter-inner">
+            <h2>Let's Build</h2>
+            <p>Production precision. Brand consistency. Multi-market localization. Fast-paced execution. Amsterdam-based, open to relocation.</p>
+            <div class="contact-links">
+                <a href="mailto:jan.lonnqvist@windowslive.com">jan.lonnqvist@windowslive.com</a><br>
+                <a href="tel:+31619584748">+31 619 584 748</a>
+            </div>
+        </div>
+    </section>
+</div>
+
+<div class="scroll-hint"><span>↓ Scroll</span></div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+
+const IS_MOBILE = /Mobi|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+
+// ─── POST-FX SHADER ───
+const PostFXShader = {
+    uniforms: {
+        tDiffuse: { value: null },
+        uTime: { value: 0 },
+    },
+    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader: `
+        uniform sampler2D tDiffuse;
+        uniform float uTime;
+        varying vec2 vUv;
+        float rand(vec2 co){ return fract(sin(dot(co,vec2(12.9898,78.233)))*43758.5453); }
+        void main(){
+            vec2 uv=vUv;
+            vec2 dir=uv-0.5;
+            float d=length(dir);
+            // Subtle chromatic aberration
+            float ab=0.002*d;
+            float r=texture2D(tDiffuse,uv+dir*ab).r;
+            float g=texture2D(tDiffuse,uv).g;
+            float b=texture2D(tDiffuse,uv-dir*ab).b;
+            vec3 col=vec3(r,g,b);
+            // Film grain
+            col+=rand(uv+fract(uTime))*0.03-0.015;
+            // Vignette
+            col*=1.0-d*d*0.6;
+            gl_FragColor=vec4(col,1.0);
+        }
+    `
+};
+
+// ─── GRID SHADER (infinite perspective grid on a plane) ───
+const GridShader = {
+    uniforms: {
+        uTime: { value: 0 },
+        uScroll: { value: 0 },
+        uColor: { value: new THREE.Color(0xe82127) },
+        uFade: { value: 1.0 },
+    },
+    vertexShader: `
+        varying vec3 vWorldPos;
+        varying vec2 vUv;
+        void main(){
+            vec4 world = modelMatrix * vec4(position, 1.0);
+            vWorldPos = world.xyz;
+            vUv = uv;
+            gl_Position = projectionMatrix * viewMatrix * world;
+        }
+    `,
+    fragmentShader: `
+        uniform float uTime;
+        uniform float uScroll;
+        uniform vec3 uColor;
+        uniform float uFade;
+        varying vec3 vWorldPos;
+
+        float gridLine(float coord, float width){
+            float d = abs(fract(coord - 0.5) - 0.5);
+            return 1.0 - smoothstep(0.0, width, d);
+        }
+
+        void main(){
+            // Scroll the grid forward
+            float z = vWorldPos.z + uScroll * 80.0;
+            float x = vWorldPos.x;
+
+            // Two grid scales
+            float fine = gridLine(x * 0.5, 0.02) + gridLine(z * 0.5, 0.02);
+            float coarse = gridLine(x * 0.1, 0.015) + gridLine(z * 0.1, 0.015);
+
+            float grid = fine * 0.15 + coarse * 0.3;
+
+            // Distance fade
+            float dist = length(vWorldPos.xz);
+            float fade = 1.0 - smoothstep(10.0, 60.0, dist);
+
+            // Pulse along the center line
+            float centerGlow = exp(-abs(x) * 0.8) * 0.15 * (0.8 + 0.2 * sin(uTime * 0.5));
+
+            float alpha = (grid * fade + centerGlow) * uFade;
+
+            // Mix white grid with colored center
+            vec3 col = mix(vec3(1.0), uColor, centerGlow / max(alpha, 0.001));
+
+            gl_FragColor = vec4(col, alpha);
+        }
+    `
+};
+
+// ─── SCENE SETUP ───
+const canvas = document.getElementById('webgl');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x0a0a0a, 1);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x0a0a0a, 0.018);
+
+const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.set(0, 4, 12);
+camera.lookAt(0, 1, -20);
+
+// ─── POST-PROCESSING ───
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+if (!IS_MOBILE) {
+    composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.5, 0.4, 0.9));
+}
+composer.addPass(new ShaderPass(PostFXShader));
+
+// ─── GROUND GRID ───
+const gridGeo = new THREE.PlaneGeometry(120, 120, 1, 1);
+const gridMat = new THREE.ShaderMaterial({
+    ...GridShader,
+    uniforms: {
+        uTime: { value: 0 },
+        uScroll: { value: 0 },
+        uColor: { value: new THREE.Color(0xe82127) },
+        uFade: { value: 1.0 },
+    },
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+});
+const gridMesh = new THREE.Mesh(gridGeo, gridMat);
+gridMesh.rotation.x = -Math.PI / 2;
+gridMesh.position.y = -2;
+scene.add(gridMesh);
+
+// ─── HORIZON LINE (subtle red glow) ───
+const horizonGeo = new THREE.PlaneGeometry(120, 0.08, 1, 1);
+const horizonMat = new THREE.MeshBasicMaterial({ color: 0xe82127, transparent: true, opacity: 0.25 });
+const horizon = new THREE.Mesh(horizonGeo, horizonMat);
+horizon.position.set(0, -1.95, -40);
+scene.add(horizon);
+
+// ─── WIREFRAME OBJECTS (floating geometry) ───
+const wireframeMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12 });
+const wireRedMat = new THREE.LineBasicMaterial({ color: 0xe82127, transparent: true, opacity: 0.18 });
+
+const wireObjects = [];
+
+function createWireframe(geo, mat, pos, scale) {
+    const edges = new THREE.EdgesGeometry(geo);
+    const line = new THREE.LineSegments(edges, mat);
+    line.position.copy(pos);
+    line.scale.setScalar(scale);
+    line.userData.rotSpeed = new THREE.Vector3(
+        (Math.random()-0.5)*0.003,
+        (Math.random()-0.5)*0.005,
+        (Math.random()-0.5)*0.002
+    );
+    line.userData.floatOffset = Math.random() * Math.PI * 2;
+    line.userData.baseY = pos.y;
+    scene.add(line);
+    wireObjects.push(line);
+    return line;
+}
+
+// Scattered wireframe shapes
+const geoTypes = [
+    () => new THREE.IcosahedronGeometry(1, 0),
+    () => new THREE.OctahedronGeometry(1, 0),
+    () => new THREE.TetrahedronGeometry(1, 0),
+    () => new THREE.BoxGeometry(1, 1, 1),
+    () => new THREE.DodecahedronGeometry(1, 0),
+];
+
+const objectPositions = [
+    // Left side
+    { pos: new THREE.Vector3(-8, 2, -15), scale: 1.8, red: false },
+    { pos: new THREE.Vector3(-12, 5, -30), scale: 2.5, red: true },
+    { pos: new THREE.Vector3(-6, 8, -50), scale: 1.5, red: false },
+    { pos: new THREE.Vector3(-10, 1, -70), scale: 2.0, red: false },
+    { pos: new THREE.Vector3(-7, 6, -90), scale: 3.0, red: true },
+    { pos: new THREE.Vector3(-14, 3, -110), scale: 1.8, red: false },
+    // Right side
+    { pos: new THREE.Vector3(9, 3, -10), scale: 1.5, red: true },
+    { pos: new THREE.Vector3(11, 6, -25), scale: 2.2, red: false },
+    { pos: new THREE.Vector3(7, 1, -45), scale: 1.8, red: false },
+    { pos: new THREE.Vector3(13, 4, -65), scale: 2.8, red: true },
+    { pos: new THREE.Vector3(8, 7, -80), scale: 1.5, red: false },
+    { pos: new THREE.Vector3(10, 2, -100), scale: 2.0, red: false },
+    // Center-ish but high or low
+    { pos: new THREE.Vector3(-2, 10, -35), scale: 1.2, red: false },
+    { pos: new THREE.Vector3(3, 9, -55), scale: 1.8, red: true },
+    { pos: new THREE.Vector3(-1, 12, -75), scale: 2.5, red: false },
+    { pos: new THREE.Vector3(2, 0, -95), scale: 1.5, red: false },
+];
+
+objectPositions.forEach((obj, i) => {
+    const geoFn = geoTypes[i % geoTypes.length];
+    const mat = obj.red ? wireRedMat : wireframeMat;
+    createWireframe(geoFn(), mat, obj.pos, obj.scale);
+});
+
+// ─── LIGHT STREAKS (horizontal lines that drift) ───
+const streakGroup = new THREE.Group();
+scene.add(streakGroup);
+
+for (let i = 0; i < 20; i++) {
+    const len = 3 + Math.random() * 8;
+    const geo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(len, 0, 0)
+    ]);
+    const isRed = Math.random() < 0.3;
+    const mat = new THREE.LineBasicMaterial({
+        color: isRed ? 0xe82127 : 0xffffff,
+        transparent: true,
+        opacity: 0.04 + Math.random() * 0.08,
+    });
+    const line = new THREE.Line(geo, mat);
+    line.position.set(
+        (Math.random() - 0.5) * 30,
+        Math.random() * 15 - 2,
+        -Math.random() * 100 - 10
+    );
+    line.userData.speed = 0.5 + Math.random() * 1.5;
+    line.userData.baseX = line.position.x;
+    streakGroup.add(line);
+}
+
+// ─── VERTICAL ACCENT LINES (architectural pillars of light) ───
+for (let i = 0; i < 8; i++) {
+    const height = 8 + Math.random() * 12;
+    const geo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, -2, 0),
+        new THREE.Vector3(0, height, 0)
+    ]);
+    const isRed = i < 2;
+    const mat = new THREE.LineBasicMaterial({
+        color: isRed ? 0xe82127 : 0xffffff,
+        transparent: true,
+        opacity: 0.04 + Math.random() * 0.06,
+    });
+    const line = new THREE.Line(geo, mat);
+    const side = i % 2 === 0 ? -1 : 1;
+    line.position.set(
+        side * (5 + Math.random() * 10),
+        0,
+        -15 - i * 12
+    );
+    scene.add(line);
+}
+
+// ─── ROAD EDGE LINES (two converging lines into distance) ───
+{
+    const pts = [];
+    for (let i = 0; i <= 100; i++) {
+        pts.push(new THREE.Vector3(-3, -1.98, -i * 1.2));
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({ color: 0xe82127, transparent: true, opacity: 0.2 });
+    scene.add(new THREE.Line(geo, mat));
+
+    const pts2 = pts.map(p => new THREE.Vector3(-p.x, p.y, p.z));
+    const geo2 = new THREE.BufferGeometry().setFromPoints(pts2);
+    scene.add(new THREE.Line(geo2, mat));
+}
+
+// ─── DASHED CENTER LINE ───
+{
+    for (let i = 0; i < 50; i++) {
+        const geo = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, -1.97, -i * 2.4),
+            new THREE.Vector3(0, -1.97, -i * 2.4 - 1.2),
+        ]);
+        const mat = new THREE.LineBasicMaterial({ color: 0x444444, transparent: true, opacity: 0.3 });
+        scene.add(new THREE.Line(geo, mat));
+    }
+}
+
+// ─── SCROLL STATE ───
+let scrollProgress = 0;
+let scrollVelocity = 0;
+let lastScrollY = 0;
+
+const chapters = document.querySelectorAll('.chapter');
+const chapterInners = document.querySelectorAll('.chapter-inner');
+const scrollHint = document.querySelector('.scroll-hint');
+
+function getScrollProgress() {
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    return docHeight <= 0 ? 0 : Math.max(0, Math.min(1, window.scrollY / docHeight));
+}
+
+function updateScroll() {
+    const sy = window.scrollY;
+    scrollVelocity = (sy - lastScrollY) * 0.01;
+    lastScrollY = sy;
+    scrollProgress = getScrollProgress();
+
+    scrollHint.classList.toggle('hidden', scrollProgress > 0.05);
+
+    chapters.forEach((ch, i) => {
+        const rect = ch.getBoundingClientRect();
+        const visible = rect.top < window.innerHeight * 0.7 && rect.bottom > window.innerHeight * 0.3;
+        chapterInners[i].classList.toggle('visible', visible);
+    });
+}
+
+window.addEventListener('scroll', updateScroll, { passive: true });
+
+// ─── MOUSE (subtle camera tilt) ───
+let mouseX = 0, mouseY = 0;
+window.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+}, { passive: true });
+
+// ─── RESIZE ───
+window.addEventListener('resize', () => {
+    const w = window.innerWidth, h = window.innerHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+    composer.setSize(w, h);
+});
+
+// ─── LOADER ───
+const loaderEl = document.getElementById('loader');
+const loaderFill = document.getElementById('loaderFill');
+let loadProgress = 0;
+
+function updateLoader(dt) {
+    if (loadProgress < 100) {
+        loadProgress = Math.min(100, loadProgress + dt * 100);
+        loaderFill.style.width = loadProgress + '%';
+        if (loadProgress >= 100) loaderEl.classList.add('done');
+    }
+}
+
+// ─── SECTION COLORS for grid accent ───
+const sectionAccents = [
+    new THREE.Color(0xe82127), // Tesla red
+    new THREE.Color(0x666666), // Silver
+    new THREE.Color(0xe82127), // Red
+    new THREE.Color(0x994422), // Warm
+    new THREE.Color(0x2266dd), // Blue
+    new THREE.Color(0x44aa88), // Teal
+    new THREE.Color(0xe82127), // Red
+];
+
+// ─── ANIMATE ───
+const clock = new THREE.Clock();
+
+function animate() {
+    requestAnimationFrame(animate);
+    const dt = clock.getDelta();
+    const elapsed = clock.getElapsedTime();
+
+    updateLoader(dt);
+
+    // Grid scroll + color
+    gridMat.uniforms.uTime.value = elapsed;
+    gridMat.uniforms.uScroll.value = scrollProgress;
+
+    const section = Math.min(6, Math.floor(scrollProgress * 6));
+    const nextSection = Math.min(6, section + 1);
+    const sectionFrac = (scrollProgress * 6) - section;
+    const targetColor = new THREE.Color().lerpColors(sectionAccents[section], sectionAccents[nextSection], sectionFrac);
+    gridMat.uniforms.uColor.value.lerp(targetColor, 0.05);
+
+    // Camera: drive forward along Z as you scroll, subtle mouse parallax
+    const camZ = 12 - scrollProgress * 80;
+    const camY = 4 + Math.sin(scrollProgress * Math.PI) * 2;
+    camera.position.x += (mouseX * 1.5 - camera.position.x) * 0.03;
+    camera.position.y += (camY + mouseY * -0.5 - camera.position.y) * 0.04;
+    camera.position.z += (camZ - camera.position.z) * 0.06;
+    camera.lookAt(camera.position.x * 0.3, 1, camera.position.z - 30);
+
+    // Wireframe objects — slow rotation + float
+    wireObjects.forEach(obj => {
+        obj.rotation.x += obj.userData.rotSpeed.x;
+        obj.rotation.y += obj.userData.rotSpeed.y;
+        obj.rotation.z += obj.userData.rotSpeed.z;
+        obj.position.y = obj.userData.baseY + Math.sin(elapsed * 0.3 + obj.userData.floatOffset) * 0.5;
+    });
+
+    // Light streaks — drift sideways
+    streakGroup.children.forEach(line => {
+        line.position.x = line.userData.baseX + Math.sin(elapsed * 0.2 * line.userData.speed) * 2;
+    });
+
+    // PostFX
+    const postPass = composer.passes[composer.passes.length - 1];
+    postPass.uniforms.uTime.value = elapsed;
+
+    scrollVelocity *= 0.92;
+    composer.render();
+}
+
+animate();
+updateScroll();
+setTimeout(() => { updateScroll(); chapterInners[0].classList.add('visible'); }, 100);
+
+</script>
+</body>
+</html>
