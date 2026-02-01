@@ -25,8 +25,11 @@
         :root {
             --bg: #0a0a0a;
             --text: rgba(255,255,255,0.92);
+            --text-75: rgba(255,255,255,0.75);
             --text-60: rgba(255,255,255,0.55);
             --text-40: rgba(255,255,255,0.35);
+            --text-25: rgba(255,255,255,0.20);
+            --text-10: rgba(255,255,255,0.08);
             --tesla-red: #e82127;
         }
 
@@ -38,184 +41,230 @@
             color: var(--text);
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
+            cursor: none;
         }
 
-        #webgl {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 0;
+        /* ─── LAYERS ─── */
+        #webgl { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #cursor-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+
+        .flashlight {
+            position: fixed; width: 600px; height: 600px; border-radius: 50%;
+            pointer-events: none; z-index: 2; transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(220,225,255,0.04) 0%, rgba(200,210,255,0.015) 30%, transparent 70%);
+            mix-blend-mode: screen; opacity: 0; transition: opacity 0.5s;
+        }
+        .flashlight.active { opacity: 1; }
+
+        .custom-cursor {
+            position: fixed; width: 16px; height: 16px; border-radius: 50%;
+            border: 1.5px solid rgba(255,255,255,0.5); pointer-events: none;
+            z-index: 9999; transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s, border-color 0.3s, background 0.3s;
+        }
+        .custom-cursor.hovering {
+            width: 48px; height: 48px;
+            border-color: var(--tesla-red);
+            background: rgba(232,33,39,0.08);
         }
 
-        .overlay {
-            position: relative;
-            z-index: 1;
-            pointer-events: none;
-        }
+        .overlay { position: relative; z-index: 3; pointer-events: none; }
 
+        /* ─── NAV ─── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 40px;
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            background: rgba(10,10,10,0.5);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            pointer-events: auto;
+        }
+        nav .logo { width: 56px; height: 56px; flex-shrink: 0; margin: -8px 0; }
+        nav .logo svg { width: 100%; height: 100%; animation: logoSpin 12s linear infinite; }
+        nav .logo svg text {
+            font-family: 'Diatype Variable', sans-serif; font-size: 14px;
+            font-weight: 700; letter-spacing: 3px; text-transform: uppercase; fill: var(--text-75);
+        }
+        @keyframes logoSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        nav .nav-links a {
+            font-size: 0.72rem; font-weight: 400; letter-spacing: 0.12em;
+            text-transform: uppercase; color: var(--text-40); text-decoration: none;
+            margin-left: 28px; transition: color 0.3s; cursor: none;
+        }
+        nav .nav-links a:hover { color: var(--tesla-red); }
+
+        /* ─── CHAPTERS ─── */
         .chapter {
-            min-height: 150vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+            min-height: 150vh; display: flex; align-items: center;
+            justify-content: center; position: relative;
         }
-
         .chapter:first-child { min-height: 100vh; }
 
         .chapter-inner {
-            position: sticky;
-            top: 50%;
-            transform: translateY(-50%);
-            max-width: 740px;
-            padding: 36px 44px;
-            text-align: center;
-            opacity: 0;
-            transition: opacity 0.6s ease;
-            pointer-events: auto;
+            position: sticky; top: 50%; transform: translateY(-50%);
+            max-width: 760px; padding: 36px 44px; text-align: center;
+            pointer-events: auto; cursor: none;
         }
 
-        .chapter-inner.visible { opacity: 1; }
+        /* Scroll reveal */
+        .chapter-inner .reveal-line {
+            display: block; overflow: hidden;
+        }
+        .chapter-inner .reveal-line > * {
+            display: block;
+            transform: translateY(110%);
+            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .chapter-inner.visible .reveal-line > * {
+            transform: translateY(0);
+        }
+        .chapter-inner.visible .reveal-line:nth-child(2) > * { transition-delay: 0.08s; }
+        .chapter-inner.visible .reveal-line:nth-child(3) > * { transition-delay: 0.16s; }
+        .chapter-inner.visible .reveal-line:nth-child(4) > * { transition-delay: 0.24s; }
+        .chapter-inner.visible .reveal-line:nth-child(5) > * { transition-delay: 0.32s; }
 
         .chapter-inner h1 {
-            font-weight: 700;
-            font-size: clamp(2.4rem, 7vw, 4.8rem);
-            letter-spacing: -0.03em;
-            line-height: 1.0;
-            margin-bottom: 12px;
+            font-weight: 700; font-size: clamp(2.4rem, 7vw, 5rem);
+            letter-spacing: -0.03em; line-height: 1.0; margin-bottom: 12px;
         }
-
         .chapter-inner h2 {
-            font-weight: 600;
-            font-size: clamp(1.3rem, 2.8vw, 1.9rem);
-            letter-spacing: -0.02em;
-            line-height: 1.15;
-            margin-bottom: 10px;
-            color: var(--text);
+            font-weight: 600; font-size: clamp(1.3rem, 2.8vw, 1.9rem);
+            letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 10px;
         }
-
         .chapter-inner .role {
-            font-weight: 400;
-            font-size: clamp(0.8rem, 1.3vw, 0.95rem);
-            color: var(--tesla-red);
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            margin-bottom: 4px;
+            font-weight: 400; font-size: clamp(0.8rem, 1.3vw, 0.95rem);
+            color: var(--tesla-red); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 4px;
         }
-
         .chapter-inner .subtitle {
-            font-weight: 350;
-            font-size: clamp(0.85rem, 1.5vw, 1.05rem);
-            color: var(--text-60);
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
+            font-weight: 350; font-size: clamp(0.85rem, 1.5vw, 1.05rem);
+            color: var(--text-60); letter-spacing: 0.1em; text-transform: uppercase;
         }
-
         .chapter-inner p {
-            font-weight: 350;
-            font-size: clamp(1rem, 1.7vw, 1.15rem);
-            line-height: 1.65;
-            color: var(--text-60);
-            margin-top: 8px;
+            font-weight: 350; font-size: clamp(1rem, 1.7vw, 1.15rem);
+            line-height: 1.65; color: var(--text-60); margin-top: 8px;
         }
-
         .chapter-inner .label {
-            font-weight: 600;
-            font-size: clamp(0.7rem, 1.1vw, 0.8rem);
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--text-40);
-            margin-bottom: 10px;
+            font-weight: 600; font-size: clamp(0.7rem, 1.1vw, 0.8rem);
+            letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-40); margin-bottom: 10px;
         }
-
-        .chapter-inner .highlight {
-            color: var(--text);
-            font-weight: 500;
-        }
-
+        .chapter-inner .highlight { color: var(--text); font-weight: 500; }
         .chapter-inner a {
-            color: var(--text);
-            text-decoration: none;
-            border-bottom: 1px solid var(--text-40);
-            transition: border-color 0.3s;
-            pointer-events: auto;
+            color: var(--text); text-decoration: none; border-bottom: 1px solid var(--text-40);
+            transition: border-color 0.3s; pointer-events: auto; cursor: none;
         }
-
         .chapter-inner a:hover { border-color: var(--tesla-red); }
+        .contact-links { margin-top: 18px; font-size: clamp(0.9rem, 1.5vw, 1.05rem); color: var(--text-60); line-height: 2; }
+        .tools { margin-top: 14px; font-size: clamp(0.8rem, 1.2vw, 0.9rem); color: var(--text-40); letter-spacing: 0.04em; line-height: 1.8; }
 
-        .contact-links {
-            margin-top: 18px;
-            font-size: clamp(0.9rem, 1.5vw, 1.05rem);
-            color: var(--text-60);
-            line-height: 2;
+        /* ─── TEXT SCRAMBLE (data-scramble) ─── */
+        .scramble-char { display: inline-block; transition: opacity 0.15s; }
+        .scramble-char.resolving { color: var(--tesla-red); }
+
+        /* ─── 3D CAROUSEL ─── */
+        .carousel-wrapper {
+            width: 100%; perspective: 1200px; overflow: hidden;
+            padding: 30px 0; position: relative; pointer-events: auto; cursor: none;
         }
-
-        .tools {
-            margin-top: 14px;
-            font-size: clamp(0.8rem, 1.2vw, 0.9rem);
-            color: var(--text-40);
-            letter-spacing: 0.04em;
-            line-height: 1.8;
+        .carousel-track {
+            display: flex; align-items: center; justify-content: center;
+            position: relative; width: 100%; height: 420px;
+            transform-style: preserve-3d; cursor: grab; user-select: none;
         }
-
-        .scroll-hint {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 2;
-            font-size: 0.75rem;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--text-40);
-            opacity: 1;
-            transition: opacity 0.8s ease;
+        .carousel-track.dragging { cursor: grabbing; }
+        .carousel-slide {
+            position: absolute; max-width: 65vw; max-height: 400px;
+            transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1);
             pointer-events: none;
         }
+        .carousel-track.dragging .carousel-slide { transition: none; }
+        .carousel-slide img {
+            max-width: 460px; max-height: 400px; width: auto; height: auto;
+            object-fit: contain; display: block; border-radius: 2px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 1px rgba(200,210,255,0.08);
+            -webkit-user-drag: none; user-select: none;
+            -webkit-mask-image: radial-gradient(ellipse 92% 92% at 50% 50%, black 60%, transparent 100%);
+            mask-image: radial-gradient(ellipse 92% 92% at 50% 50%, black 60%, transparent 100%);
+            transition: transform 0.2s ease-out;
+        }
+        .carousel-controls {
+            display: flex; justify-content: center; align-items: center;
+            gap: 16px; margin-top: 1.5rem;
+        }
+        .carousel-controls button {
+            width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.02); color: var(--text-60);
+            cursor: none; font-size: 0.85rem; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center; border-radius: 0;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        }
+        .carousel-controls button:hover {
+            background: rgba(232,33,39,0.1); border-color: var(--tesla-red); color: #fff;
+        }
+        .carousel-controls .counter {
+            font-size: 0.8rem; font-weight: 400; color: var(--text-40);
+            min-width: 60px; text-align: center;
+        }
 
+        /* ─── ABOUT ─── */
+        .about-portrait {
+            width: 100%; max-width: 320px; height: auto; border-radius: 2px;
+            margin: 0 auto 2rem;
+            -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 60%, transparent 100%);
+            mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 60%, transparent 100%);
+            display: block;
+        }
+
+        /* ─── GENERATIVE PATTERN CANVASES ─── */
+        .gen-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; opacity: 0.04; z-index: -1;
+        }
+
+        /* ─── SCROLL HINT ─── */
+        .scroll-hint {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            z-index: 4; font-size: 0.72rem; letter-spacing: 0.15em;
+            text-transform: uppercase; color: var(--text-40);
+            opacity: 1; transition: opacity 0.8s; pointer-events: none;
+        }
         .scroll-hint.hidden { opacity: 0; }
-        .scroll-hint span {
-            display: inline-block;
-            animation: scrollBounce 2s ease-in-out infinite;
-        }
+        .scroll-hint span { display: inline-block; animation: scrollBounce 2s ease-in-out infinite; }
+        @keyframes scrollBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
 
-        @keyframes scrollBounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(6px); }
-        }
-
+        /* ─── LOADER ─── */
         #loader {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: #0a0a0a;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 1s ease;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0a0a0a; z-index: 200; display: flex;
+            align-items: center; justify-content: center; transition: opacity 1.2s ease;
         }
-
         #loader.done { opacity: 0; pointer-events: none; }
+        #loader .bar { width: 120px; height: 2px; background: rgba(255,255,255,0.06); border-radius: 1px; overflow: hidden; }
+        #loader .bar-fill { width: 0%; height: 100%; background: var(--tesla-red); transition: width 0.3s ease; }
 
-        #loader .bar {
-            width: 120px;
-            height: 2px;
-            background: rgba(255,255,255,0.08);
-            border-radius: 1px;
-            overflow: hidden;
+        /* ─── MAGNETIC ELEMENTS ─── */
+        .magnetic { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        /* ─── VIDEO ─── */
+        .video-wrapper {
+            position: relative; width: 100%; max-width: 680px; padding-bottom: 56.25%;
+            margin: 16px auto 0; pointer-events: auto;
         }
-
-        #loader .bar-fill {
-            width: 0%;
-            height: 100%;
-            background: var(--tesla-red);
-            transition: width 0.3s ease;
+        .video-wrapper iframe {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border: none; border-radius: 2px;
         }
 
         @media (max-width: 768px) {
+            body { cursor: auto; }
+            .custom-cursor, .flashlight, #cursor-canvas { display: none; }
             .chapter { min-height: 120vh; }
-            .chapter-inner { padding: 24px 22px; }
+            .chapter-inner { padding: 24px 20px; }
+            nav { padding: 14px 18px; }
+            .carousel-track { height: 260px; }
+            .carousel-slide img { max-width: 60vw; max-height: 240px; }
+            .carousel-controls button { width: 36px; height: 36px; cursor: auto; }
         }
     </style>
 </head>
@@ -223,63 +272,169 @@
 
 <div id="loader"><div class="bar"><div class="bar-fill" id="loaderFill"></div></div></div>
 
+<!-- Custom cursor -->
+<div class="custom-cursor" id="customCursor"></div>
+<div class="flashlight" id="flashlight"></div>
+
+<!-- WebGL -->
 <canvas id="webgl"></canvas>
 
+<!-- Cursor trail canvas -->
+<canvas id="cursor-canvas"></canvas>
+
+<!-- Nav -->
+<nav>
+    <div class="logo">
+        <svg viewBox="0 0 100 100">
+            <defs><path id="cp" d="M 50,50 m -28,0 a 28,28 0 1,1 56,0 a 28,28 0 1,1 -56,0" fill="none"/></defs>
+            <text><textPath href="#cp">JAN LÖNNQVIST •</textPath></text>
+        </svg>
+    </div>
+    <div class="nav-links">
+        <a href="#work" class="magnetic">Work</a>
+        <a href="#about" class="magnetic">About</a>
+    </div>
+</nav>
+
 <div class="overlay">
+    <!-- 0: Hero -->
     <section class="chapter" data-index="0">
         <div class="chapter-inner">
-            <div class="role">Application</div>
-            <h1>JAN LÖNNQVIST</h1>
-            <p class="subtitle">In-House Graphic Designer — Tesla EMEA Production Team</p>
+            <span class="reveal-line"><span class="role">Application</span></span>
+            <span class="reveal-line"><h1 data-scramble>JAN LÖNNQVIST</h1></span>
+            <span class="reveal-line"><p class="subtitle">In-House Graphic Designer — Tesla EMEA Production Team</p></span>
         </div>
     </section>
 
+    <div id="work"></div>
+
+    <!-- 1: Production Precision -->
     <section class="chapter" data-index="1">
+        <canvas class="gen-canvas" data-pattern="grid"></canvas>
         <div class="chapter-inner">
-            <div class="label">2013 – 2018 · Helsinki</div>
-            <h2>Production Precision</h2>
-            <p>Five years on print production floors — Multiprint, Lönnberg, Cocomms, Pixmill, Planex. Offset printing, prepress, colour management and brand-spec execution. The discipline of production where every detail is measured, every proof is checked, and every asset ships on time.</p>
+            <span class="reveal-line"><div class="label">2013 – 2018 · Helsinki</div></span>
+            <span class="reveal-line"><h2 data-scramble>Production Precision</h2></span>
+            <span class="reveal-line"><p>Five years on print production floors — Multiprint, Lönnberg, Cocomms, Pixmill, Planex. Offset printing, prepress, colour management and brand-spec execution. The discipline of production where every detail is measured, every proof is checked, and every asset ships on time.</p></span>
         </div>
-    </section>
-
-    <section class="chapter" data-index="2">
-        <div class="chapter-inner">
-            <div class="label">2019 – 2020</div>
-            <h2>Brand Leadership</h2>
-            <p>Art direction at Valve. Then IKEA — a photography-led sustainability campaign that helped preserve an old-growth forest. <span class="highlight">Translating global brand guidelines into locally resonant creative</span>, adapting assets for cultural and environmental context. Brand consistency with regional nuance.</p>
-        </div>
-    </section>
-
-    <section class="chapter" data-index="3">
-        <div class="chapter-inner">
-            <h2>Localized at Scale</h2>
-            <p>Amsterdam. HelloFresh — <span class="highlight">leading a team of three</span>, managing multiple campaigns simultaneously. Rituals Hammam campaign: highest sales in the product's history. DHL — <span class="highlight">12+ markets, 26 locations</span>, 20% of targeted leads in month one. Brochures, social media, emailing, point-of-sale. Every format, every market.</p>
-        </div>
-    </section>
-
-    <section class="chapter" data-index="4">
-        <div class="chapter-inner">
-            <h2>EMEA-Wide Design</h2>
-            <p>GLS Group. <span class="highlight">40+ countries</span>. Group-level design systems. Adapting global templates to local markets across Europe, managing asset libraries, ensuring brand coherence at continental scale. The exact workflow Tesla's EMEA Production Team runs daily.</p>
-        </div>
-    </section>
-
-    <section class="chapter" data-index="5">
-        <div class="chapter-inner">
-            <h2>Full-Stack Toolkit</h2>
-            <p>From offset lithography to AI-assisted workflows. Figma, Adobe Creative Suite, production pipelines, design systems, template architecture. <span class="highlight">Cultural sensitivity across EMEA markets</span> — typography, layout, colour, and composition tailored to regional audiences.</p>
-            <div class="tools">Figma · Photoshop · Illustrator · InDesign · After Effects · Premiere Pro · AI workflows</div>
-        </div>
-    </section>
-
-    <section class="chapter" data-index="6">
-        <div class="chapter-inner">
-            <h2>Let's Build</h2>
-            <p>Production precision. Brand consistency. Multi-market localization. Fast-paced execution. Amsterdam-based, open to relocation.</p>
-            <div class="contact-links">
-                <a href="mailto:jan.lonnqvist@windowslive.com">jan.lonnqvist@windowslive.com</a><br>
-                <a href="tel:+31619584748">+31 619 584 748</a>
+        <div class="carousel-wrapper">
+            <div class="carousel-track" data-carousel>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/T2235633688450684056056331375046/bioverno_EN.jpg" alt="UPM"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/G2235633688432237311982621823430/Lignin_EN.jpg" alt="UPM"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/C2235633688413790567908912271814/profi_EN.jpg" alt="UPM"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/F2235633688395343823835202720198/recognition_EN.jpg" alt="UPM"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/H2235635051167009013202037903814/UPM_OPTI_wrapper_a3.jpg" alt="UPM"></div>
             </div>
+            <div class="carousel-controls">
+                <button data-prev class="magnetic">&#8592;</button>
+                <span class="counter"><span data-index>01</span> / <span data-total>05</span></span>
+                <button data-next class="magnetic">&#8594;</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2: Brand Leadership -->
+    <section class="chapter" data-index="2">
+        <canvas class="gen-canvas" data-pattern="wave"></canvas>
+        <div class="chapter-inner">
+            <span class="reveal-line"><div class="label">2019 – 2020</div></span>
+            <span class="reveal-line"><h2 data-scramble>Brand Leadership</h2></span>
+            <span class="reveal-line"><p>Art direction at Valve. Then IKEA — a photography-led sustainability campaign that helped preserve an old-growth forest. <span class="highlight">Translating global brand guidelines into locally resonant creative</span>, adapting assets for cultural and environmental context.</p></span>
+        </div>
+        <div class="carousel-wrapper">
+            <div class="carousel-track" data-carousel>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/M2234023436410699934446659703238/JanLonnqvist_Lookbook_Page_01.jpg" alt="Filling Pieces"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/E2234023436429146678520369254854/JanLonnqvist_Lookbook_Page_02.jpg" alt="Filling Pieces"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/K2234023436447593422594078806470/JanLonnqvist_Lookbook_Page_04.jpg" alt="Filling Pieces"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/H2234067313577899242954199798214/priima3.jpg" alt="IKEA"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/J2234067313541005754806780694982/Capture77777.PNG" alt="IKEA"></div>
+            </div>
+            <div class="carousel-controls">
+                <button data-prev class="magnetic">&#8592;</button>
+                <span class="counter"><span data-index>01</span> / <span data-total>05</span></span>
+                <button data-next class="magnetic">&#8594;</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3: Localized at Scale -->
+    <section class="chapter" data-index="3">
+        <canvas class="gen-canvas" data-pattern="dots"></canvas>
+        <div class="chapter-inner">
+            <span class="reveal-line"><h2 data-scramble>Localized at Scale</h2></span>
+            <span class="reveal-line"><p>Amsterdam. HelloFresh — <span class="highlight">leading a team of three</span>, managing multiple campaigns simultaneously. Rituals Hammam campaign: highest sales in the product's history. DHL — <span class="highlight">12+ markets, 26 locations</span>, 20% of targeted leads in month one.</p></span>
+        </div>
+        <div class="carousel-wrapper">
+            <div class="carousel-track" data-carousel>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/V2235624139622741508822904213958/Screenshot-2023-11-08-at-18.19.41.png" alt="Rituals"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/B2235624139604294764749194662342/Screenshot-2023-11-08-at-18.19.58.png" alt="Rituals"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/K2235621859900321903501677302214/-INT_0923011---SEPT23---Hammam---Hero-banner--270x250-.jpg" alt="Rituals Hammam"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/R2234070998554835639395359265222/DHL_CarouselV2_Artboard-1-copy-3.png" alt="DHL"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/U2234070998573282383469068816838/DHL_Localizations_Eindhoven_LinkedIn.jpg" alt="DHL"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/Y2234046762244794163879839928774/Screenshot-2025-02-27-at-18.02.54.png" alt="HelloFresh"></div>
+            </div>
+            <div class="carousel-controls">
+                <button data-prev class="magnetic">&#8592;</button>
+                <span class="counter"><span data-index>01</span> / <span data-total>06</span></span>
+                <button data-next class="magnetic">&#8594;</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4: EMEA-Wide -->
+    <section class="chapter" data-index="4">
+        <canvas class="gen-canvas" data-pattern="circuit"></canvas>
+        <div class="chapter-inner">
+            <span class="reveal-line"><h2 data-scramble>EMEA-Wide Design</h2></span>
+            <span class="reveal-line"><p>GLS Group. <span class="highlight">40+ countries</span>. Group-level design systems. Adapting global templates to local markets across Europe, managing asset libraries, ensuring brand coherence at continental scale.</p></span>
+        </div>
+        <div class="carousel-wrapper">
+            <div class="carousel-track" data-carousel>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/K2234040659526899002622588359110/LosAngeles1.png" alt="GLS"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/Q2234040659545345746696297910726/milan1.png" alt="GLS"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/T2234040659471558770401459704262/barcelona1.png" alt="GLS"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/I2234042127371218435839029547462/carousels-02.png" alt="GLS"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/O2234032510437896768469937820102/00045_Net-Zero-visuals_Scope123-Recovered-06.png" alt="GLS"></div>
+            </div>
+            <div class="carousel-controls">
+                <button data-prev class="magnetic">&#8592;</button>
+                <span class="counter"><span data-index>01</span> / <span data-total>05</span></span>
+                <button data-next class="magnetic">&#8594;</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5: Full-Stack Toolkit -->
+    <section class="chapter" data-index="5">
+        <canvas class="gen-canvas" data-pattern="flow"></canvas>
+        <div class="chapter-inner">
+            <span class="reveal-line"><h2 data-scramble>Full-Stack Toolkit</h2></span>
+            <span class="reveal-line"><p>From offset lithography to AI-assisted workflows. Figma, Adobe Creative Suite, production pipelines, design systems, template architecture. <span class="highlight">Cultural sensitivity across EMEA markets</span>.</p></span>
+            <span class="reveal-line"><div class="tools">Figma · Photoshop · Illustrator · InDesign · After Effects · Premiere Pro · AI workflows</div></span>
+        </div>
+        <div class="carousel-wrapper">
+            <div class="carousel-track" data-carousel>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/M2235640263847949362047133553094/HVO_Herstelcampaign_animation_1.gif" alt="HVO"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/R2235640263829502617973424001478/HVO_Herstelcampaign_animation_2.gif" alt="HVO"></div>
+                <div class="carousel-slide"><img src="https://freight.cargo.site/w/1500/i/A2235640263811055873899714449862/HVO_Herstelcampaign_animation_3.gif" alt="HVO"></div>
+            </div>
+            <div class="carousel-controls">
+                <button data-prev class="magnetic">&#8592;</button>
+                <span class="counter"><span data-index>01</span> / <span data-total>03</span></span>
+                <button data-next class="magnetic">&#8594;</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6: About + CTA -->
+    <section class="chapter" id="about" data-index="6">
+        <div class="chapter-inner">
+            <span class="reveal-line"><img class="about-portrait" src="https://freight.cargo.site/w/1000/i/I2251116696699520999765586088390/Jan-copy.jpg" alt="Jan Lönnqvist"></span>
+            <span class="reveal-line"><h2 data-scramble>Let's Build</h2></span>
+            <span class="reveal-line"><p>Production precision. Brand consistency. Multi-market localization. Fast-paced execution. Amsterdam-based, open to relocation.</p></span>
+            <span class="reveal-line"><div class="contact-links">
+                <a href="mailto:jan.lonnqvist@windowslive.com" class="magnetic">jan.lonnqvist@windowslive.com</a><br>
+                <a href="tel:+31619584748" class="magnetic">+31 619 584 748</a>
+            </div></span>
         </div>
     </section>
 </div>
@@ -287,12 +442,7 @@
 <div class="scroll-hint"><span>↓ Scroll</span></div>
 
 <script type="importmap">
-{
-    "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-    }
-}
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
 </script>
 
 <script type="module">
@@ -304,96 +454,313 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
 const IS_MOBILE = /Mobi|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
 
-// ─── POST-FX SHADER ───
+// ════════════════════════════════════════
+// CURSOR SYSTEM (trail + custom + flashlight + magnetic)
+// ════════════════════════════════════════
+const cursorEl = document.getElementById('customCursor');
+const flashlightEl = document.getElementById('flashlight');
+const trailCanvas = document.getElementById('cursor-canvas');
+const trailCtx = trailCanvas.getContext('2d');
+
+let mx = -100, my = -100, smx = -100, smy = -100;
+let mVx = 0, mVy = 0, pmx = -100, pmy = -100;
+const trail = [];
+const TRAIL_LENGTH = 40;
+
+function resizeTrailCanvas() {
+    trailCanvas.width = window.innerWidth;
+    trailCanvas.height = window.innerHeight;
+}
+resizeTrailCanvas();
+
+document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    mVx = mx - pmx; mVy = my - pmy;
+    pmx = mx; pmy = my;
+    if (!flashlightEl.classList.contains('active')) flashlightEl.classList.add('active');
+});
+document.addEventListener('mouseleave', () => flashlightEl.classList.remove('active'));
+
+// Magnetic hover
+const magnetics = document.querySelectorAll('.magnetic');
+magnetics.forEach(el => {
+    el.addEventListener('mouseenter', () => cursorEl.classList.add('hovering'));
+    el.addEventListener('mouseleave', () => {
+        cursorEl.classList.remove('hovering');
+        el.style.transform = '';
+    });
+    el.addEventListener('mousemove', e => {
+        const rect = el.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = (e.clientX - cx) * 0.25;
+        const dy = (e.clientY - cy) * 0.25;
+        el.style.transform = `translate(${dx}px, ${dy}px)`;
+    });
+});
+
+function animateCursor() {
+    requestAnimationFrame(animateCursor);
+
+    smx += (mx - smx) * 0.15;
+    smy += (my - smy) * 0.15;
+
+    cursorEl.style.left = smx + 'px';
+    cursorEl.style.top = smy + 'px';
+    flashlightEl.style.left = smx + 'px';
+    flashlightEl.style.top = smy + 'px';
+
+    // Trail
+    const speed = Math.sqrt(mVx * mVx + mVy * mVy);
+    trail.unshift({ x: smx, y: smy, speed: Math.min(speed, 30) });
+    if (trail.length > TRAIL_LENGTH) trail.pop();
+
+    trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+    if (trail.length > 2 && !IS_MOBILE) {
+        trailCtx.beginPath();
+        trailCtx.moveTo(trail[0].x, trail[0].y);
+        for (let i = 1; i < trail.length; i++) {
+            const p = trail[i];
+            const prev = trail[i - 1];
+            const cpx = (prev.x + p.x) / 2;
+            const cpy = (prev.y + p.y) / 2;
+            trailCtx.quadraticCurveTo(prev.x, prev.y, cpx, cpy);
+        }
+        const gradient = trailCtx.createLinearGradient(trail[0].x, trail[0].y, trail[trail.length-1].x, trail[trail.length-1].y);
+        gradient.addColorStop(0, `rgba(232, 33, 39, ${Math.min(speed * 0.012, 0.35)})`);
+        gradient.addColorStop(0.5, `rgba(255, 255, 255, ${Math.min(speed * 0.006, 0.12)})`);
+        gradient.addColorStop(1, 'rgba(255,255,255,0)');
+        trailCtx.strokeStyle = gradient;
+        trailCtx.lineWidth = 1.5 + speed * 0.08;
+        trailCtx.lineCap = 'round';
+        trailCtx.stroke();
+    }
+}
+if (!IS_MOBILE) animateCursor();
+
+// ════════════════════════════════════════
+// TEXT SCRAMBLE on scroll reveal
+// ════════════════════════════════════════
+const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&';
+
+function scrambleElement(el) {
+    const original = el.textContent;
+    const chars = original.split('');
+    let frame = 0;
+    const totalFrames = 25;
+
+    function tick() {
+        const progress = frame / totalFrames;
+        const resolved = Math.floor(progress * chars.length);
+        let result = '';
+        for (let i = 0; i < chars.length; i++) {
+            if (chars[i] === ' ') { result += ' '; continue; }
+            if (i < resolved) { result += chars[i]; }
+            else { result += CHARS[Math.floor(Math.random() * CHARS.length)]; }
+        }
+        el.textContent = result;
+        frame++;
+        if (frame <= totalFrames) requestAnimationFrame(tick);
+        else el.textContent = original;
+    }
+    tick();
+}
+
+// ════════════════════════════════════════
+// GENERATIVE PATTERN CANVASES
+// ════════════════════════════════════════
+function initGenerativeCanvases() {
+    document.querySelectorAll('.gen-canvas').forEach(canvas => {
+        const ctx = canvas.getContext('2d');
+        const pattern = canvas.dataset.pattern;
+        const w = canvas.width = 400;
+        const h = canvas.height = 400;
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.lineWidth = 0.5;
+
+        if (pattern === 'grid') {
+            for (let x = 0; x < w; x += 20) {
+                for (let y = 0; y < h; y += 20) {
+                    if (Math.random() > 0.5) {
+                        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 20, y + 20); ctx.stroke();
+                    } else {
+                        ctx.beginPath(); ctx.moveTo(x + 20, y); ctx.lineTo(x, y + 20); ctx.stroke();
+                    }
+                }
+            }
+        } else if (pattern === 'wave') {
+            for (let i = 0; i < 30; i++) {
+                ctx.beginPath();
+                for (let x = 0; x < w; x++) {
+                    ctx.lineTo(x, h/2 + Math.sin(x * 0.02 + i * 0.5) * (40 + i * 4) + Math.sin(x * 0.05) * 15);
+                }
+                ctx.stroke();
+            }
+        } else if (pattern === 'dots') {
+            for (let i = 0; i < 500; i++) {
+                const x = Math.random() * w;
+                const y = Math.random() * h;
+                const r = Math.random() * 2;
+                ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            for (let i = 0; i < 500; i++) {
+                ctx.beginPath(); ctx.arc(Math.random()*w, Math.random()*h, Math.random()*1.5, 0, Math.PI*2); ctx.fill();
+            }
+        } else if (pattern === 'circuit') {
+            for (let i = 0; i < 60; i++) {
+                let x = Math.random() * w, y = Math.random() * h;
+                ctx.beginPath(); ctx.moveTo(x, y);
+                for (let s = 0; s < 5; s++) {
+                    const dir = Math.floor(Math.random() * 4);
+                    const len = 10 + Math.random() * 40;
+                    if (dir === 0) x += len;
+                    else if (dir === 1) x -= len;
+                    else if (dir === 2) y += len;
+                    else y -= len;
+                    ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+                ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI*2); ctx.stroke();
+            }
+        } else if (pattern === 'flow') {
+            for (let i = 0; i < 80; i++) {
+                let x = Math.random() * w, y = Math.random() * h;
+                ctx.beginPath(); ctx.moveTo(x, y);
+                for (let s = 0; s < 20; s++) {
+                    const angle = Math.sin(x*0.01)*3 + Math.cos(y*0.01)*3;
+                    x += Math.cos(angle) * 5;
+                    y += Math.sin(angle) * 5;
+                    ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+        }
+    });
+}
+initGenerativeCanvases();
+
+// ════════════════════════════════════════
+// 3D CAROUSELS with tilt
+// ════════════════════════════════════════
+document.querySelectorAll('[data-carousel]').forEach(track => {
+    const slides = Array.from(track.querySelectorAll('.carousel-slide'));
+    const wrapper = track.closest('.carousel-wrapper');
+    const prevBtn = wrapper.querySelector('[data-prev]');
+    const nextBtn = wrapper.querySelector('[data-next]');
+    const indexEl = wrapper.querySelector('[data-index]');
+    const total = slides.length;
+    let current = 0;
+
+    function update() {
+        const isMobile = window.innerWidth <= 768;
+        const spacing = isMobile ? Math.min(150, window.innerWidth * 0.38) : 320;
+        const depth = isMobile ? 70 : 160;
+        const rot = isMobile ? 12 : 18;
+
+        slides.forEach((slide, i) => {
+            let offset = i - current;
+            if (offset > total / 2) offset -= total;
+            if (offset < -total / 2) offset += total;
+            const absOffset = Math.abs(offset);
+            const maxVis = isMobile ? 2 : 3;
+            const opacity = absOffset > maxVis ? 0 : Math.max(0, 1 - absOffset * 0.35);
+            const scale = Math.max(0.6, 1 - absOffset * 0.12);
+
+            slide.style.transform = `translateX(${offset * spacing}px) translateZ(${-absOffset * depth}px) rotateY(${-offset * rot}deg) scale(${scale})`;
+            slide.style.opacity = opacity;
+            slide.style.zIndex = 100 - absOffset;
+        });
+        if (indexEl) indexEl.textContent = String(current + 1).padStart(2, '0');
+    }
+
+    const goNext = () => { current = (current + 1) % total; update(); };
+    const goPrev = () => { current = (current - 1 + total) % total; update(); };
+
+    prevBtn?.addEventListener('click', goPrev);
+    nextBtn?.addEventListener('click', goNext);
+
+    // Touch + drag
+    let startX = 0, dragging = false;
+    track.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    track.addEventListener('touchend', e => {
+        const diff = startX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 40) diff > 0 ? goNext() : goPrev();
+    }, { passive: true });
+    track.addEventListener('mousedown', e => { dragging = true; startX = e.clientX; track.classList.add('dragging'); e.preventDefault(); });
+    window.addEventListener('mouseup', e => {
+        if (!dragging) return;
+        dragging = false; track.classList.remove('dragging');
+        const diff = startX - e.clientX;
+        if (Math.abs(diff) > 40) diff > 0 ? goNext() : goPrev();
+    });
+    wrapper.addEventListener('wheel', e => {
+        const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+        if (Math.abs(d) > 30) { e.preventDefault(); d > 0 ? goNext() : goPrev(); }
+    }, { passive: false });
+
+    // 3D tilt on hover over center slide
+    track.addEventListener('mousemove', e => {
+        const centerSlide = slides[current];
+        if (!centerSlide) return;
+        const img = centerSlide.querySelector('img');
+        if (!img) return;
+        const rect = centerSlide.getBoundingClientRect();
+        const rx = (e.clientX - rect.left) / rect.width - 0.5;
+        const ry = (e.clientY - rect.top) / rect.height - 0.5;
+        img.style.transform = `perspective(600px) rotateY(${rx * 8}deg) rotateX(${-ry * 8}deg)`;
+    });
+    track.addEventListener('mouseleave', () => {
+        slides.forEach(s => { const img = s.querySelector('img'); if (img) img.style.transform = ''; });
+    });
+
+    update();
+});
+
+// ════════════════════════════════════════
+// THREE.JS SCENE (road + wireframes)
+// ════════════════════════════════════════
 const PostFXShader = {
-    uniforms: {
-        tDiffuse: { value: null },
-        uTime: { value: 0 },
-    },
+    uniforms: { tDiffuse: { value: null }, uTime: { value: 0 } },
     vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
     fragmentShader: `
-        uniform sampler2D tDiffuse;
-        uniform float uTime;
-        varying vec2 vUv;
+        uniform sampler2D tDiffuse; uniform float uTime; varying vec2 vUv;
         float rand(vec2 co){ return fract(sin(dot(co,vec2(12.9898,78.233)))*43758.5453); }
         void main(){
-            vec2 uv=vUv;
-            vec2 dir=uv-0.5;
-            float d=length(dir);
-            // Subtle chromatic aberration
+            vec2 uv=vUv; vec2 dir=uv-0.5; float d=length(dir);
             float ab=0.002*d;
             float r=texture2D(tDiffuse,uv+dir*ab).r;
             float g=texture2D(tDiffuse,uv).g;
             float b=texture2D(tDiffuse,uv-dir*ab).b;
             vec3 col=vec3(r,g,b);
-            // Film grain
-            col+=rand(uv+fract(uTime))*0.03-0.015;
-            // Vignette
-            col*=1.0-d*d*0.6;
+            col+=rand(uv+fract(uTime))*0.025-0.0125;
+            col*=1.0-d*d*0.55;
             gl_FragColor=vec4(col,1.0);
-        }
-    `
+        }`
 };
 
-// ─── GRID SHADER (infinite perspective grid on a plane) ───
 const GridShader = {
-    uniforms: {
-        uTime: { value: 0 },
-        uScroll: { value: 0 },
-        uColor: { value: new THREE.Color(0xe82127) },
-        uFade: { value: 1.0 },
-    },
-    vertexShader: `
-        varying vec3 vWorldPos;
-        varying vec2 vUv;
-        void main(){
-            vec4 world = modelMatrix * vec4(position, 1.0);
-            vWorldPos = world.xyz;
-            vUv = uv;
-            gl_Position = projectionMatrix * viewMatrix * world;
-        }
-    `,
+    vertexShader: `varying vec3 vWorldPos; void main(){ vec4 w=modelMatrix*vec4(position,1.0); vWorldPos=w.xyz; gl_Position=projectionMatrix*viewMatrix*w; }`,
     fragmentShader: `
-        uniform float uTime;
-        uniform float uScroll;
-        uniform vec3 uColor;
-        uniform float uFade;
+        uniform float uTime; uniform float uScroll; uniform vec3 uColor; uniform float uMouseSpeed;
         varying vec3 vWorldPos;
-
-        float gridLine(float coord, float width){
-            float d = abs(fract(coord - 0.5) - 0.5);
-            return 1.0 - smoothstep(0.0, width, d);
-        }
-
+        float gridLine(float c, float w){ return 1.0-smoothstep(0.0,w,abs(fract(c-0.5)-0.5)); }
         void main(){
-            // Scroll the grid forward
-            float z = vWorldPos.z + uScroll * 80.0;
-            float x = vWorldPos.x;
-
-            // Two grid scales
-            float fine = gridLine(x * 0.5, 0.02) + gridLine(z * 0.5, 0.02);
-            float coarse = gridLine(x * 0.1, 0.015) + gridLine(z * 0.1, 0.015);
-
-            float grid = fine * 0.15 + coarse * 0.3;
-
-            // Distance fade
-            float dist = length(vWorldPos.xz);
-            float fade = 1.0 - smoothstep(10.0, 60.0, dist);
-
-            // Pulse along the center line
-            float centerGlow = exp(-abs(x) * 0.8) * 0.15 * (0.8 + 0.2 * sin(uTime * 0.5));
-
-            float alpha = (grid * fade + centerGlow) * uFade;
-
-            // Mix white grid with colored center
-            vec3 col = mix(vec3(1.0), uColor, centerGlow / max(alpha, 0.001));
-
-            gl_FragColor = vec4(col, alpha);
-        }
-    `
+            float z=vWorldPos.z+uScroll*80.0; float x=vWorldPos.x;
+            float fine=gridLine(x*0.5,0.02)+gridLine(z*0.5,0.02);
+            float coarse=gridLine(x*0.1,0.015)+gridLine(z*0.1,0.015);
+            float grid=fine*0.15+coarse*0.3;
+            float dist=length(vWorldPos.xz);
+            float fade=1.0-smoothstep(10.0,60.0,dist);
+            float pulse=0.8+0.2*sin(uTime*0.5)+uMouseSpeed*0.3;
+            float centerGlow=exp(-abs(x)*0.8)*0.15*pulse;
+            float alpha=(grid*fade+centerGlow);
+            vec3 col=mix(vec3(1.0),uColor,centerGlow/max(alpha,0.001));
+            gl_FragColor=vec4(col,alpha);
+        }`
 };
 
-// ─── SCENE SETUP ───
 const canvas = document.getElementById('webgl');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -402,305 +769,221 @@ renderer.setClearColor(0x0a0a0a, 1);
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x0a0a0a, 0.018);
-
 const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 200);
 camera.position.set(0, 4, 12);
-camera.lookAt(0, 1, -20);
 
-// ─── POST-PROCESSING ───
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
-if (!IS_MOBILE) {
-    composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.5, 0.4, 0.9));
-}
+if (!IS_MOBILE) composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.45, 0.4, 0.9));
 composer.addPass(new ShaderPass(PostFXShader));
 
-// ─── GROUND GRID ───
-const gridGeo = new THREE.PlaneGeometry(120, 120, 1, 1);
+// Grid
 const gridMat = new THREE.ShaderMaterial({
-    ...GridShader,
-    uniforms: {
-        uTime: { value: 0 },
-        uScroll: { value: 0 },
-        uColor: { value: new THREE.Color(0xe82127) },
-        uFade: { value: 1.0 },
-    },
-    transparent: true,
-    side: THREE.DoubleSide,
-    depthWrite: false,
+    vertexShader: GridShader.vertexShader, fragmentShader: GridShader.fragmentShader,
+    uniforms: { uTime: {value:0}, uScroll: {value:0}, uColor: {value: new THREE.Color(0xe82127)}, uMouseSpeed: {value:0} },
+    transparent: true, side: THREE.DoubleSide, depthWrite: false,
 });
-const gridMesh = new THREE.Mesh(gridGeo, gridMat);
-gridMesh.rotation.x = -Math.PI / 2;
-gridMesh.position.y = -2;
+const gridMesh = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), gridMat);
+gridMesh.rotation.x = -Math.PI / 2; gridMesh.position.y = -2;
 scene.add(gridMesh);
 
-// ─── HORIZON LINE (subtle red glow) ───
-const horizonGeo = new THREE.PlaneGeometry(120, 0.08, 1, 1);
-const horizonMat = new THREE.MeshBasicMaterial({ color: 0xe82127, transparent: true, opacity: 0.25 });
-const horizon = new THREE.Mesh(horizonGeo, horizonMat);
-horizon.position.set(0, -1.95, -40);
-scene.add(horizon);
+// Horizon
+const hMat = new THREE.MeshBasicMaterial({ color: 0xe82127, transparent: true, opacity: 0.2 });
+const hMesh = new THREE.Mesh(new THREE.PlaneGeometry(120, 0.06), hMat);
+hMesh.position.set(0, -1.95, -40); scene.add(hMesh);
 
-// ─── WIREFRAME OBJECTS (floating geometry) ───
-const wireframeMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12 });
-const wireRedMat = new THREE.LineBasicMaterial({ color: 0xe82127, transparent: true, opacity: 0.18 });
-
-const wireObjects = [];
-
-function createWireframe(geo, mat, pos, scale) {
-    const edges = new THREE.EdgesGeometry(geo);
-    const line = new THREE.LineSegments(edges, mat);
-    line.position.copy(pos);
-    line.scale.setScalar(scale);
-    line.userData.rotSpeed = new THREE.Vector3(
-        (Math.random()-0.5)*0.003,
-        (Math.random()-0.5)*0.005,
-        (Math.random()-0.5)*0.002
-    );
-    line.userData.floatOffset = Math.random() * Math.PI * 2;
-    line.userData.baseY = pos.y;
-    scene.add(line);
-    wireObjects.push(line);
-    return line;
+// Road lines
+{
+    const mat = new THREE.LineBasicMaterial({ color: 0xe82127, transparent: true, opacity: 0.18 });
+    const pts = []; for (let i = 0; i <= 100; i++) pts.push(new THREE.Vector3(-3, -1.98, -i * 1.2));
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat));
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(-p.x, p.y, p.z))), mat));
+}
+// Dashes
+for (let i = 0; i < 50; i++) {
+    const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-1.97,-i*2.4), new THREE.Vector3(0,-1.97,-i*2.4-1.2)]);
+    scene.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0x444444, transparent: true, opacity: 0.25 })));
 }
 
-// Scattered wireframe shapes
-const geoTypes = [
-    () => new THREE.IcosahedronGeometry(1, 0),
-    () => new THREE.OctahedronGeometry(1, 0),
-    () => new THREE.TetrahedronGeometry(1, 0),
-    () => new THREE.BoxGeometry(1, 1, 1),
-    () => new THREE.DodecahedronGeometry(1, 0),
+// Wireframes
+const wMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 });
+const wRed = new THREE.LineBasicMaterial({ color: 0xe82127, transparent: true, opacity: 0.15 });
+const wireObjs = [];
+const geoFns = [
+    () => new THREE.IcosahedronGeometry(1,0), () => new THREE.OctahedronGeometry(1,0),
+    () => new THREE.TetrahedronGeometry(1,0), () => new THREE.BoxGeometry(1,1,1),
+    () => new THREE.DodecahedronGeometry(1,0),
 ];
-
-const objectPositions = [
-    // Left side
-    { pos: new THREE.Vector3(-8, 2, -15), scale: 1.8, red: false },
-    { pos: new THREE.Vector3(-12, 5, -30), scale: 2.5, red: true },
-    { pos: new THREE.Vector3(-6, 8, -50), scale: 1.5, red: false },
-    { pos: new THREE.Vector3(-10, 1, -70), scale: 2.0, red: false },
-    { pos: new THREE.Vector3(-7, 6, -90), scale: 3.0, red: true },
-    { pos: new THREE.Vector3(-14, 3, -110), scale: 1.8, red: false },
-    // Right side
-    { pos: new THREE.Vector3(9, 3, -10), scale: 1.5, red: true },
-    { pos: new THREE.Vector3(11, 6, -25), scale: 2.2, red: false },
-    { pos: new THREE.Vector3(7, 1, -45), scale: 1.8, red: false },
-    { pos: new THREE.Vector3(13, 4, -65), scale: 2.8, red: true },
-    { pos: new THREE.Vector3(8, 7, -80), scale: 1.5, red: false },
-    { pos: new THREE.Vector3(10, 2, -100), scale: 2.0, red: false },
-    // Center-ish but high or low
-    { pos: new THREE.Vector3(-2, 10, -35), scale: 1.2, red: false },
-    { pos: new THREE.Vector3(3, 9, -55), scale: 1.8, red: true },
-    { pos: new THREE.Vector3(-1, 12, -75), scale: 2.5, red: false },
-    { pos: new THREE.Vector3(2, 0, -95), scale: 1.5, red: false },
+const wPos = [
+    {p:[-8,2,-15],s:1.8,r:0},{p:[-12,5,-30],s:2.5,r:1},{p:[-6,8,-50],s:1.5,r:0},
+    {p:[-10,1,-70],s:2,r:0},{p:[-7,6,-90],s:3,r:1},{p:[9,3,-10],s:1.5,r:1},
+    {p:[11,6,-25],s:2.2,r:0},{p:[7,1,-45],s:1.8,r:0},{p:[13,4,-65],s:2.8,r:1},
+    {p:[8,7,-80],s:1.5,r:0},{p:[-2,10,-35],s:1.2,r:0},{p:[3,9,-55],s:1.8,r:1},
+    {p:[-1,12,-75],s:2.5,r:0},{p:[2,0,-95],s:1.5,r:0},
 ];
-
-objectPositions.forEach((obj, i) => {
-    const geoFn = geoTypes[i % geoTypes.length];
-    const mat = obj.red ? wireRedMat : wireframeMat;
-    createWireframe(geoFn(), mat, obj.pos, obj.scale);
+wPos.forEach((o, i) => {
+    const edges = new THREE.EdgesGeometry(geoFns[i % geoFns.length]());
+    const line = new THREE.LineSegments(edges, o.r ? wRed : wMat);
+    line.position.set(...o.p); line.scale.setScalar(o.s);
+    line.userData = {
+        rs: new THREE.Vector3((Math.random()-.5)*.004, (Math.random()-.5)*.006, (Math.random()-.5)*.003),
+        fo: Math.random()*Math.PI*2, by: o.p[1]
+    };
+    scene.add(line); wireObjs.push(line);
 });
 
-// ─── LIGHT STREAKS (horizontal lines that drift) ───
-const streakGroup = new THREE.Group();
-scene.add(streakGroup);
-
-for (let i = 0; i < 20; i++) {
-    const len = 3 + Math.random() * 8;
-    const geo = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(len, 0, 0)
-    ]);
-    const isRed = Math.random() < 0.3;
-    const mat = new THREE.LineBasicMaterial({
-        color: isRed ? 0xe82127 : 0xffffff,
-        transparent: true,
-        opacity: 0.04 + Math.random() * 0.08,
-    });
-    const line = new THREE.Line(geo, mat);
-    line.position.set(
-        (Math.random() - 0.5) * 30,
-        Math.random() * 15 - 2,
-        -Math.random() * 100 - 10
-    );
-    line.userData.speed = 0.5 + Math.random() * 1.5;
-    line.userData.baseX = line.position.x;
-    streakGroup.add(line);
+// Streaks
+const streakGroup = new THREE.Group(); scene.add(streakGroup);
+for (let i = 0; i < 24; i++) {
+    const len = 3 + Math.random() * 10;
+    const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(len,0,0)]);
+    const isR = Math.random() < 0.3;
+    const m = new THREE.LineBasicMaterial({ color: isR ? 0xe82127 : 0xffffff, transparent: true, opacity: 0.03 + Math.random() * 0.06 });
+    const l = new THREE.Line(g, m);
+    l.position.set((Math.random()-.5)*30, Math.random()*15-2, -Math.random()*100-10);
+    l.userData = { speed: 0.5 + Math.random() * 1.5, bx: l.position.x };
+    streakGroup.add(l);
 }
 
-// ─── VERTICAL ACCENT LINES (architectural pillars of light) ───
+// Vertical pillars
 for (let i = 0; i < 8; i++) {
-    const height = 8 + Math.random() * 12;
-    const geo = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, -2, 0),
-        new THREE.Vector3(0, height, 0)
-    ]);
-    const isRed = i < 2;
-    const mat = new THREE.LineBasicMaterial({
-        color: isRed ? 0xe82127 : 0xffffff,
-        transparent: true,
-        opacity: 0.04 + Math.random() * 0.06,
-    });
-    const line = new THREE.Line(geo, mat);
-    const side = i % 2 === 0 ? -1 : 1;
-    line.position.set(
-        side * (5 + Math.random() * 10),
-        0,
-        -15 - i * 12
-    );
-    scene.add(line);
+    const h = 8 + Math.random() * 12;
+    const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-2,0), new THREE.Vector3(0,h,0)]);
+    const m = new THREE.LineBasicMaterial({ color: i<2 ? 0xe82127 : 0xffffff, transparent: true, opacity: 0.03 + Math.random()*0.05 });
+    const l = new THREE.Line(g, m);
+    l.position.set((i%2===0?-1:1)*(5+Math.random()*10), 0, -15-i*12);
+    scene.add(l);
 }
 
-// ─── ROAD EDGE LINES (two converging lines into distance) ───
-{
-    const pts = [];
-    for (let i = 0; i <= 100; i++) {
-        pts.push(new THREE.Vector3(-3, -1.98, -i * 1.2));
-    }
-    const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    const mat = new THREE.LineBasicMaterial({ color: 0xe82127, transparent: true, opacity: 0.2 });
-    scene.add(new THREE.Line(geo, mat));
-
-    const pts2 = pts.map(p => new THREE.Vector3(-p.x, p.y, p.z));
-    const geo2 = new THREE.BufferGeometry().setFromPoints(pts2);
-    scene.add(new THREE.Line(geo2, mat));
-}
-
-// ─── DASHED CENTER LINE ───
-{
-    for (let i = 0; i < 50; i++) {
-        const geo = new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(0, -1.97, -i * 2.4),
-            new THREE.Vector3(0, -1.97, -i * 2.4 - 1.2),
-        ]);
-        const mat = new THREE.LineBasicMaterial({ color: 0x444444, transparent: true, opacity: 0.3 });
-        scene.add(new THREE.Line(geo, mat));
-    }
-}
-
-// ─── SCROLL STATE ───
-let scrollProgress = 0;
-let scrollVelocity = 0;
-let lastScrollY = 0;
-
+// ════════════════════════════════════════
+// SCROLL + SECTION MANAGEMENT
+// ════════════════════════════════════════
+let scrollProgress = 0, scrollVel = 0, lastSY = 0;
 const chapters = document.querySelectorAll('.chapter');
 const chapterInners = document.querySelectorAll('.chapter-inner');
 const scrollHint = document.querySelector('.scroll-hint');
+const scrambleTargets = document.querySelectorAll('[data-scramble]');
+const scrambled = new Set();
 
 function getScrollProgress() {
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    return docHeight <= 0 ? 0 : Math.max(0, Math.min(1, window.scrollY / docHeight));
+    const dh = document.documentElement.scrollHeight - window.innerHeight;
+    return dh <= 0 ? 0 : Math.max(0, Math.min(1, window.scrollY / dh));
 }
 
 function updateScroll() {
     const sy = window.scrollY;
-    scrollVelocity = (sy - lastScrollY) * 0.01;
-    lastScrollY = sy;
+    scrollVel = (sy - lastSY) * 0.01;
+    lastSY = sy;
     scrollProgress = getScrollProgress();
-
-    scrollHint.classList.toggle('hidden', scrollProgress > 0.05);
+    scrollHint.classList.toggle('hidden', scrollProgress > 0.04);
 
     chapters.forEach((ch, i) => {
         const rect = ch.getBoundingClientRect();
-        const visible = rect.top < window.innerHeight * 0.7 && rect.bottom > window.innerHeight * 0.3;
-        chapterInners[i].classList.toggle('visible', visible);
+        const vis = rect.top < window.innerHeight * 0.7 && rect.bottom > window.innerHeight * 0.3;
+        const inner = chapterInners[i];
+        const wasVis = inner.classList.contains('visible');
+        inner.classList.toggle('visible', vis);
+
+        // Trigger scramble on first reveal
+        if (vis && !wasVis) {
+            inner.querySelectorAll('[data-scramble]').forEach(el => {
+                if (!scrambled.has(el)) { scrambled.add(el); scrambleElement(el); }
+            });
+        }
     });
 }
-
 window.addEventListener('scroll', updateScroll, { passive: true });
 
-// ─── MOUSE (subtle camera tilt) ───
-let mouseX = 0, mouseY = 0;
-window.addEventListener('mousemove', (e) => {
-    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
-}, { passive: true });
-
-// ─── RESIZE ───
-window.addEventListener('resize', () => {
-    const w = window.innerWidth, h = window.innerHeight;
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
-    composer.setSize(w, h);
-});
-
-// ─── LOADER ───
-const loaderEl = document.getElementById('loader');
-const loaderFill = document.getElementById('loaderFill');
-let loadProgress = 0;
-
-function updateLoader(dt) {
-    if (loadProgress < 100) {
-        loadProgress = Math.min(100, loadProgress + dt * 100);
-        loaderFill.style.width = loadProgress + '%';
-        if (loadProgress >= 100) loaderEl.classList.add('done');
-    }
-}
-
-// ─── SECTION COLORS for grid accent ───
-const sectionAccents = [
-    new THREE.Color(0xe82127), // Tesla red
-    new THREE.Color(0x666666), // Silver
-    new THREE.Color(0xe82127), // Red
-    new THREE.Color(0x994422), // Warm
-    new THREE.Color(0x2266dd), // Blue
-    new THREE.Color(0x44aa88), // Teal
-    new THREE.Color(0xe82127), // Red
+// Section accent colors
+const accents = [
+    new THREE.Color(0xe82127), new THREE.Color(0x666666), new THREE.Color(0xe82127),
+    new THREE.Color(0x994422), new THREE.Color(0x2266dd), new THREE.Color(0x44aa88), new THREE.Color(0xe82127),
 ];
 
-// ─── ANIMATE ───
+// ════════════════════════════════════════
+// RESIZE
+// ════════════════════════════════════════
+window.addEventListener('resize', () => {
+    const w = window.innerWidth, h = window.innerHeight;
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+    renderer.setSize(w, h); composer.setSize(w, h);
+    resizeTrailCanvas();
+});
+
+// ════════════════════════════════════════
+// LOADER
+// ════════════════════════════════════════
+const loaderEl = document.getElementById('loader');
+const loaderFill = document.getElementById('loaderFill');
+let loadProg = 0;
+
+// ════════════════════════════════════════
+// RENDER LOOP
+// ════════════════════════════════════════
 const clock = new THREE.Clock();
+let mouseSpeed = 0;
 
 function animate() {
     requestAnimationFrame(animate);
     const dt = clock.getDelta();
-    const elapsed = clock.getElapsedTime();
+    const t = clock.getElapsedTime();
 
-    updateLoader(dt);
+    // Loader
+    if (loadProg < 100) {
+        loadProg = Math.min(100, loadProg + dt * 90);
+        loaderFill.style.width = loadProg + '%';
+        if (loadProg >= 100) loaderEl.classList.add('done');
+    }
 
-    // Grid scroll + color
-    gridMat.uniforms.uTime.value = elapsed;
+    // Mouse speed for grid pulse
+    mouseSpeed = Math.sqrt(mVx*mVx + mVy*mVy) * 0.02;
+    mouseSpeed = Math.min(mouseSpeed, 1.0);
+
+    // Grid uniforms
+    gridMat.uniforms.uTime.value = t;
     gridMat.uniforms.uScroll.value = scrollProgress;
+    gridMat.uniforms.uMouseSpeed.value += (mouseSpeed - gridMat.uniforms.uMouseSpeed.value) * 0.08;
 
-    const section = Math.min(6, Math.floor(scrollProgress * 6));
-    const nextSection = Math.min(6, section + 1);
-    const sectionFrac = (scrollProgress * 6) - section;
-    const targetColor = new THREE.Color().lerpColors(sectionAccents[section], sectionAccents[nextSection], sectionFrac);
-    gridMat.uniforms.uColor.value.lerp(targetColor, 0.05);
+    // Grid color
+    const sec = Math.min(6, Math.floor(scrollProgress * 6));
+    const nSec = Math.min(6, sec + 1);
+    const sf = scrollProgress * 6 - sec;
+    const tc = new THREE.Color().lerpColors(accents[sec], accents[nSec], sf);
+    gridMat.uniforms.uColor.value.lerp(tc, 0.05);
 
-    // Camera: drive forward along Z as you scroll, subtle mouse parallax
+    // Camera drive
     const camZ = 12 - scrollProgress * 80;
     const camY = 4 + Math.sin(scrollProgress * Math.PI) * 2;
-    camera.position.x += (mouseX * 1.5 - camera.position.x) * 0.03;
-    camera.position.y += (camY + mouseY * -0.5 - camera.position.y) * 0.04;
+    const mouseNX = IS_MOBILE ? 0 : (mx / window.innerWidth - 0.5) * 2;
+    const mouseNY = IS_MOBILE ? 0 : (my / window.innerHeight - 0.5) * 2;
+    camera.position.x += (mouseNX * 1.5 - camera.position.x) * 0.03;
+    camera.position.y += (camY + mouseNY * -0.5 - camera.position.y) * 0.04;
     camera.position.z += (camZ - camera.position.z) * 0.06;
     camera.lookAt(camera.position.x * 0.3, 1, camera.position.z - 30);
 
-    // Wireframe objects — slow rotation + float
-    wireObjects.forEach(obj => {
-        obj.rotation.x += obj.userData.rotSpeed.x;
-        obj.rotation.y += obj.userData.rotSpeed.y;
-        obj.rotation.z += obj.userData.rotSpeed.z;
-        obj.position.y = obj.userData.baseY + Math.sin(elapsed * 0.3 + obj.userData.floatOffset) * 0.5;
+    // Wireframes
+    wireObjs.forEach(o => {
+        o.rotation.x += o.userData.rs.x;
+        o.rotation.y += o.userData.rs.y;
+        o.rotation.z += o.userData.rs.z;
+        o.position.y = o.userData.by + Math.sin(t * 0.3 + o.userData.fo) * 0.5;
     });
 
-    // Light streaks — drift sideways
-    streakGroup.children.forEach(line => {
-        line.position.x = line.userData.baseX + Math.sin(elapsed * 0.2 * line.userData.speed) * 2;
+    // Streaks
+    streakGroup.children.forEach(l => {
+        l.position.x = l.userData.bx + Math.sin(t * 0.2 * l.userData.speed) * 2;
     });
 
     // PostFX
-    const postPass = composer.passes[composer.passes.length - 1];
-    postPass.uniforms.uTime.value = elapsed;
+    composer.passes[composer.passes.length - 1].uniforms.uTime.value = t;
 
-    scrollVelocity *= 0.92;
+    scrollVel *= 0.92;
     composer.render();
 }
 
 animate();
 updateScroll();
-setTimeout(() => { updateScroll(); chapterInners[0].classList.add('visible'); }, 100);
+setTimeout(() => { updateScroll(); chapterInners[0].classList.add('visible'); }, 200);
 
 </script>
 </body>
